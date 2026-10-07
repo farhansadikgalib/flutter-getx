@@ -5,7 +5,7 @@ license: Apache-2.0
 compatibility: Requires Flutter stable 3.x and Dart 3.x on PATH, Python 3.9+, and network access to pub.dev for version lookup. get_cli is activated automatically with dart pub global activate.
 metadata:
   author: farhansadikgalib
-  version: "0.1.0"
+  version: "0.2.0"
   source: https://github.com/farhansadikgalib/Flutter-GetX-with-Basic-Setup
 ---
 
@@ -20,6 +20,26 @@ the scripts.
 `SKILL_DIR` below means the directory containing this file. Run scripts with
 `python3 SKILL_DIR/scripts/<name>.py` or `bash SKILL_DIR/scripts/<name>.sh`.
 
+## Slash commands
+
+Installed as a Claude Code plugin, the skill adds these commands. They run
+the same scripts as the workflows below, so either path gives the same result.
+
+| Command | Does |
+|---|---|
+| `/flutter-getx:new <app_name>` | New app: pattern, latest packages, generated code, analyze and test |
+| `/flutter-getx:init [dir]` | Add the pattern to an existing Flutter app without overwriting files |
+| `/flutter-getx:page <name> [--on parent]` | Page with binding, controller, view and route |
+| `/flutter-getx:feature <name> <endpoint>` | API-backed screen: model, remote source, states, view, tests |
+| `/flutter-getx:model <json> <ClassName>` | Model with fromJson, toJson, copyWith from a sample |
+| `/flutter-getx:string <key> "<text>"` | Translated string in every locale, keys regenerated |
+| `/flutter-getx:upgrade [dir]` | Latest packages, hive to hive_ce, deprecations fixed |
+| `/flutter-getx:fcm` | Firebase push notifications add-on |
+| `/flutter-getx:doctor [dir]` | Toolchain and project health check |
+
+Without the plugin (personal skill, claude.ai, skills.sh), the user asks in
+plain words and you follow the matching workflow below.
+
 ## Pick the task
 
 | The user wants | Do |
@@ -29,11 +49,12 @@ the scripts.
 | A new screen or feature | **Add a module** |
 | A model from a JSON response | **Add a model** |
 | A screen that loads data from an API | **Add a module**, **Add a model**, then follow `references/networking.md` |
-| A new string or language | `references/localization.md` |
+| A new string or language | `python3 SKILL_DIR/scripts/add_string.py <key> "<English>" --ar "<Arabic>"`, then `references/localization.md` |
 | Colors, fonts, dark mode | `references/theming.md` |
 | Caching or settings on device | `references/local-storage.md` |
 | Push notifications | `references/firebase-fcm.md` (opt-in add-on) |
 | Upgrade an old GetX project's packages | **Upgrade** |
+| Check setup or diagnose a project | `python3 SKILL_DIR/scripts/doctor.py --project <dir>` |
 
 If the user's request is vague, ask only for what you cannot default: app
 name (snake_case), and optionally org id, platforms, and design artboard size.

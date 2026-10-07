@@ -1,0 +1,21 @@
+{
+  "name": "flutter-getx",
+  "version": "0.2.0",
+  "description": "Scaffold and extend Flutter apps with GetX: production folder pattern, latest pub.dev packages, get_cli pages, API features, models, translations, upgrades and push notifications.",
+  "author": {
+    "name": "Farhan Sadik Galib",
+    "url": "https://github.com/farhansadikgalib"
+  },
+  "homepage": "https://github.com/farhansadikgalib/flutter-getx",
+  "repository": "https://github.com/farhansadikgalib/flutter-getx",
+  "license": "Apache-2.0",
+  "keywords": [
+    "flutter",
+    "getx",
+    "get_cli",
+    "dart",
+    "scaffold",
+    "architecture",
+    "mobile"
+  ]
+}

@@ -53,4 +53,4 @@
 - [x] 8.1 Add `.claude-plugin/marketplace.json` referencing `skills/flutter-getx`; verify `/plugin marketplace add <local path>` followed by install lists `flutter-getx` in a fresh Claude Code session
 - [x] 8.2 Run `python -m scripts.package_skill skills/flutter-getx dist/`; verify `dist/flutter-getx.skill` exists, `unzip -l` shows `flutter-getx/SKILL.md` and no `evals/` entries
 - [x] 8.3 Copy the skill to `~/.claude/skills/flutter-getx` and verify a new session triggers it on "set up a new flutter project with getx and a home screen, api layer and dark mode" without naming the skill
-- [ ] 8.4 Update README.md with upload instructions for claude.ai (custom skills), the Claude API, Claude Code marketplace, and `npx skills add`; verify every command in the README is copy-paste runnable
+- [x] 8.4 Update README.md with upload instructions for claude.ai (custom skills), the Claude API, Claude Code marketplace, and `npx skills add`; verify every command in the README is copy-paste runnable
