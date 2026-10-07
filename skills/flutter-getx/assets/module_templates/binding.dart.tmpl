@@ -1,0 +1,12 @@
+import 'package:get/get.dart';
+
+import '../controllers/{{snake_name}}_controller.dart';
+
+class {{class_name}}Binding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut<{{class_name}}Controller>(
+      () => {{class_name}}Controller(),
+    );
+  }
+}

@@ -1,0 +1,175 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:get/get_utils/get_utils.dart';
+import 'package:logger/logger.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+
+import '../../generated/locales.g.dart';
+import '../../utils/constants.dart';
+import '../components/custom_snackbar.dart';
+import 'api_exceptions.dart';
+
+enum RequestType { get, post, put, patch, delete }
+
+/// Thin, safe wrapper around Dio. Every call ends in exactly one of
+/// `onSuccess` or `onError`; nothing throws out of [safeApiCall].
+class BaseClient {
+  BaseClient._();
+
+  static const Duration _timeout = Duration(seconds: 15);
+
+  static final Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: Constants.baseUrl,
+      connectTimeout: _timeout,
+      receiveTimeout: _timeout,
+      sendTimeout: _timeout,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ),
+  )..interceptors.add(
+      PrettyDioLogger(
+        requestHeader: true,
+        requestBody: true,
+        responseBody: true,
+        responseHeader: false,
+        error: true,
+        compact: true,
+        maxWidth: 90,
+        enabled: kDebugMode,
+      ),
+    );
+
+  /// Exposed for tests (http_mock_adapter) and for adding interceptors
+  /// such as an auth header at startup.
+  static Dio get dio => _dio;
+
+  /// Perform a request and route the outcome to callbacks.
+  static Future<void> safeApiCall(
+    String url,
+    RequestType requestType, {
+    required FutureOr<void> Function(Response<dynamic> response) onSuccess,
+    FutureOr<void> Function(ApiException exception)? onError,
+    FutureOr<void> Function()? onLoading,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? queryParameters,
+    dynamic data,
+    ProgressCallback? onReceiveProgress,
+    ProgressCallback? onSendProgress,
+  }) async {
+    try {
+      await onLoading?.call();
+      final options = Options(headers: headers);
+      final response = switch (requestType) {
+        RequestType.get => await _dio.get(
+            url,
+            queryParameters: queryParameters,
+            options: options,
+            onReceiveProgress: onReceiveProgress,
+          ),
+        RequestType.post => await _dio.post(
+            url,
+            data: data,
+            queryParameters: queryParameters,
+            options: options,
+            onSendProgress: onSendProgress,
+            onReceiveProgress: onReceiveProgress,
+          ),
+        RequestType.put => await _dio.put(
+            url,
+            data: data,
+            queryParameters: queryParameters,
+            options: options,
+            onSendProgress: onSendProgress,
+            onReceiveProgress: onReceiveProgress,
+          ),
+        RequestType.patch => await _dio.patch(
+            url,
+            data: data,
+            queryParameters: queryParameters,
+            options: options,
+            onSendProgress: onSendProgress,
+            onReceiveProgress: onReceiveProgress,
+          ),
+        RequestType.delete => await _dio.delete(
+            url,
+            data: data,
+            queryParameters: queryParameters,
+            options: options,
+          ),
+      };
+      await onSuccess(response);
+    } on DioException catch (error) {
+      await _dispatch(_mapDioException(error, url), onError);
+    } on TimeoutException {
+      await _dispatch(
+        ApiException(url: url, message: LocaleKeys.server_not_responding.tr),
+        onError,
+      );
+    } catch (error, stackTrace) {
+      // Usually a JSON parsing problem inside onSuccess.
+      Logger().e('Unexpected error for $url', error: error, stackTrace: stackTrace);
+      await _dispatch(
+        ApiException(url: url, message: LocaleKeys.unexpected_error.tr),
+        onError,
+      );
+    }
+  }
+
+  /// Download a file to [savePath].
+  static Future<void> download({
+    required String url,
+    required String savePath,
+    required FutureOr<void> Function() onSuccess,
+    FutureOr<void> Function(ApiException exception)? onError,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    try {
+      await _dio.download(url, savePath, onReceiveProgress: onReceiveProgress);
+      await onSuccess();
+    } on DioException catch (error) {
+      await _dispatch(_mapDioException(error, url), onError);
+    } catch (error) {
+      await _dispatch(ApiException(url: url, message: error.toString()), onError);
+    }
+  }
+
+  static ApiException _mapDioException(DioException error, String url) {
+    final statusCode = error.response?.statusCode;
+    final String message = switch (error.type) {
+      DioExceptionType.connectionTimeout ||
+      DioExceptionType.sendTimeout ||
+      DioExceptionType.receiveTimeout ||
+      DioExceptionType.transformTimeout =>
+        LocaleKeys.server_not_responding.tr,
+      DioExceptionType.connectionError => LocaleKeys.no_internet_connection.tr,
+      DioExceptionType.cancel => LocaleKeys.request_cancelled.tr,
+      DioExceptionType.badResponse => switch (statusCode) {
+          401 || 403 => LocaleKeys.unauthorized.tr,
+          404 => LocaleKeys.url_not_found.tr,
+          int code when code >= 500 => LocaleKeys.server_error.tr,
+          _ => error.message ?? LocaleKeys.something_went_wrong.tr,
+        },
+      _ => error.message ?? LocaleKeys.something_went_wrong.tr,
+    };
+    return ApiException(
+      url: url,
+      message: message,
+      statusCode: statusCode,
+      response: error.response,
+    );
+  }
+
+  /// Hand the exception to the caller, or show a toast when no handler was given.
+  static FutureOr<void> _dispatch(
+    ApiException exception,
+    FutureOr<void> Function(ApiException exception)? onError,
+  ) {
+    if (onError != null) return onError(exception);
+    CustomSnackBar.showCustomErrorToast(message: exception.toString());
+  }
+}

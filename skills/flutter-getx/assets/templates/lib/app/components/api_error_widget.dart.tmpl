@@ -1,0 +1,43 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+
+import '../../generated/locales.g.dart';
+
+/// Message plus retry button; use it as the `errorWidget` of a
+/// `MyWidgetsAnimator`.
+class ApiErrorWidget extends StatelessWidget {
+  const ApiErrorWidget({
+    super.key,
+    required this.message,
+    required this.retryAction,
+    this.padding,
+  });
+
+  final String message;
+  final VoidCallback retryAction;
+  final EdgeInsets? padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: padding ?? EdgeInsets.symmetric(horizontal: 24.w),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(message, textAlign: TextAlign.center),
+            10.verticalSpace,
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: retryAction,
+                child: Text(LocaleKeys.retry.tr),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

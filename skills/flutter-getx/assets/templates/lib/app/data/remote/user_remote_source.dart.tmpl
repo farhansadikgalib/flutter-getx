@@ -1,0 +1,40 @@
+import 'dart:async';
+
+import '../../services/api_client.dart';
+import '../../services/api_exceptions.dart';
+import '../models/user_model.dart';
+
+/// Example remote data source. One class per backend resource; controllers
+/// call these instead of touching [BaseClient] directly.
+class UserRemoteSource {
+  Future<void> fetchUser(
+    int id, {
+    required FutureOr<void> Function(UserModel user) onSuccess,
+    required FutureOr<void> Function(ApiException exception) onError,
+  }) {
+    return BaseClient.safeApiCall(
+      '/users/$id',
+      RequestType.get,
+      onSuccess: (response) =>
+          onSuccess(UserModel.fromJson(response.data as Map<String, dynamic>)),
+      onError: onError,
+    );
+  }
+
+  Future<void> fetchUsers({
+    required FutureOr<void> Function(List<UserModel> users) onSuccess,
+    required FutureOr<void> Function(ApiException exception) onError,
+  }) {
+    return BaseClient.safeApiCall(
+      '/users',
+      RequestType.get,
+      onSuccess: (response) {
+        final list = (response.data as List<dynamic>)
+            .map((e) => UserModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+        return onSuccess(list);
+      },
+      onError: onError,
+    );
+  }
+}

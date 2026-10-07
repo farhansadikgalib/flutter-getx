@@ -1,0 +1,66 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:{{package_name}}/app/core/binding/initial_binding.dart';
+import 'package:{{package_name}}/app/data/local/my_shared_pref.dart';
+import 'package:{{package_name}}/app/routes/app_pages.dart';
+import 'package:{{package_name}}/config/theme/my_theme.dart';
+import 'package:{{package_name}}/config/translations/localization_service.dart';
+import 'package:{{package_name}}/generated/locales.g.dart';
+
+/// Boots the real route table with fakes for the platform pieces
+/// (shared preferences, no font downloads, GetX test mode).
+Widget buildTestApp() {
+  return ScreenUtilInit(
+    designSize: const Size({{design_width}}, {{design_height}}),
+    minTextAdapt: true,
+    builder: (context, child) => GetMaterialApp(
+      theme: MyTheme.light(),
+      darkTheme: MyTheme.dark(),
+      themeMode: MyTheme.themeMode,
+      initialRoute: AppPages.INITIAL,
+      getPages: AppPages.routes,
+      initialBinding: InitialBinding(),
+      locale: MySharedPref.getCurrentLocal(),
+      fallbackLocale: LocalizationService.fallbackLocale,
+      translations: LocalizationService.getInstance(),
+    ),
+  );
+}
+
+void main() {
+  setUp(() async {
+    Get.testMode = true;
+    GoogleFonts.config.allowRuntimeFetching = false;
+    SharedPreferences.setMockInitialValues({});
+    MySharedPref.setStorage(await SharedPreferences.getInstance());
+  });
+
+  tearDown(Get.reset);
+
+  testWidgets('home renders and the counter increments', (tester) async {
+    await tester.pumpWidget(buildTestApp());
+    await tester.pumpAndSettle();
+
+    expect(find.text(LocaleKeys.hello.tr), findsOneWidget);
+    expect(find.textContaining('0'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pump();
+
+    expect(find.textContaining('1'), findsOneWidget);
+  });
+
+  testWidgets('theme toggle persists to shared preferences', (tester) async {
+    await tester.pumpWidget(buildTestApp());
+    await tester.pumpAndSettle();
+
+    expect(MySharedPref.getThemeIsLight(), isTrue);
+    await MyTheme.changeTheme();
+    expect(MySharedPref.getThemeIsLight(), isFalse);
+  });
+}

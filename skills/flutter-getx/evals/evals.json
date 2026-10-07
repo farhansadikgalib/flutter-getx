@@ -1,0 +1,54 @@
+{
+  "skill_name": "flutter-getx",
+  "evals": [
+    {
+      "id": 1,
+      "name": "new-app-dark-mode-arabic",
+      "prompt": "Create a new Flutter app called shop_app in the current folder using GetX. I want a proper folder structure with a home screen, an API layer with Dio, dark mode toggle that remembers my choice, and English plus Arabic. Use the latest package versions. Only target android and ios.",
+      "expected_output": "A shop_app Flutter project with the GetX folder pattern, latest pinned packages, theme and language toggles on home, and clean analyze/test.",
+      "files": [],
+      "expectations": [
+        "shop_app/lib/app/core/base/base_controller.dart and base_view.dart exist",
+        "shop_app/lib/app/services/api_client.dart exists and uses Dio",
+        "shop_app/lib/config/theme/my_theme.dart and lib/config/translations/localization_service.dart exist",
+        "shop_app/assets/locales contains en_US.json and ar_AR.json",
+        "shop_app/lib/app/routes/app_pages.dart registers a HOME route",
+        "Every managed dependency in shop_app/pubspec.yaml is constrained to the latest stable version on pub.dev",
+        "shop_app/pubspec.yaml uses hive_ce, not hive",
+        "flutter analyze in shop_app reports no issues",
+        "flutter test in shop_app passes"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "add-products-module-from-api",
+      "prompt": "In my GetX project (the shop_app folder here), add a Products screen that loads the list from https://fakestoreapi.com/products and shows title and price, with loading, error with retry, and pull to refresh. Here is one item from the API: {\"id\":1,\"title\":\"Backpack\",\"price\":109.95,\"description\":\"...\",\"category\":\"men's clothing\",\"image\":\"https://fakestoreapi.com/img/1.jpg\",\"rating\":{\"rate\":3.9,\"count\":120}}",
+      "expected_output": "A products module generated with the skill's module script, a ProductModel with nested Rating, a remote source using BaseClient, a controller using ApiCallStatus, and a view using MyWidgetsAnimator.",
+      "files": ["evals/files/shop_app_baseline.md"],
+      "expectations": [
+        "shop_app/lib/app/modules/products/ has bindings, controllers and views folders",
+        "The products controller extends BaseController",
+        "The products view extends BaseView",
+        "app_routes.dart defines Routes.PRODUCTS",
+        "A ProductModel class with fromJson exists and has a nested Rating class",
+        "HTTP is performed through BaseClient.safeApiCall, not a new Dio or GetConnect instance",
+        "The view renders through MyWidgetsAnimator with an error widget that retries",
+        "flutter analyze in shop_app reports no issues"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "upgrade-legacy-getx-project",
+      "prompt": "I have an old GetX project at legacy_app that still uses hive 2.2.3, flutter_lints 3 and firebase_core 2. Upgrade everything to the latest versions and fix whatever breaks. Keep my code working.",
+      "expected_output": "legacy_app on current package versions with hive replaced by hive_ce, deprecated APIs fixed, and clean analyze.",
+      "files": ["evals/files/legacy_app_setup.md"],
+      "expectations": [
+        "legacy_app/pubspec.yaml no longer depends on hive, hive_flutter or hive_generator",
+        "legacy_app/pubspec.yaml depends on hive_ce and hive_ce_flutter",
+        "No Dart file in legacy_app/lib references MaterialStateProperty or withOpacity",
+        "No Dart file in legacy_app/lib imports package:hive/ or package:hive_flutter/",
+        "flutter analyze in legacy_app reports no errors"
+      ]
+    }
+  ]
+}

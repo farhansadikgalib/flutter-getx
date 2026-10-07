@@ -1,0 +1,76 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+
+import '../../../generated/locales.g.dart';
+import 'base_controller.dart';
+
+/// Every page view extends this instead of [GetView]. Subclasses implement
+/// [appBar] and [body]; the base takes care of the scaffold, keyboard
+/// dismissal on tap, and the offline banner driven by the connection manager.
+abstract class BaseView<T extends BaseController> extends GetView<T> {
+  const BaseView({super.key});
+
+  /// Return `null` for a page without an app bar.
+  PreferredSizeWidget? appBar(BuildContext context);
+
+  /// The page content, placed below the connection banner inside a SafeArea.
+  Widget body(BuildContext context);
+
+  Widget? bottomNavigationBar(BuildContext context) => null;
+
+  Widget? drawer(BuildContext context) => null;
+
+  Widget? floatingActionButton(BuildContext context) => null;
+
+  /// Override to change or hide the offline banner.
+  Widget? connectionStatusView(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      height: 30.h,
+      color: theme.colorScheme.error,
+      alignment: Alignment.center,
+      child: Text(
+        LocaleKeys.no_internet_connection.tr,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onError,
+          fontSize: 12.sp,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Obx(
+        () => Scaffold(
+          resizeToAvoidBottomInset: controller.resizeToAvoidBottomInset.value,
+          appBar: appBar(context),
+          drawer: drawer(context),
+          bottomNavigationBar: bottomNavigationBar(context),
+          floatingActionButton: floatingActionButton(context),
+          body: _pageScaffold(context),
+        ),
+      ),
+    );
+  }
+
+  Widget _pageScaffold(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        children: [
+          Obx(() {
+            if (controller.connection.isInternetConnected.value) {
+              return const SizedBox.shrink();
+            }
+            return connectionStatusView(context) ?? const SizedBox.shrink();
+          }),
+          Expanded(child: body(context)),
+        ],
+      ),
+    );
+  }
+}

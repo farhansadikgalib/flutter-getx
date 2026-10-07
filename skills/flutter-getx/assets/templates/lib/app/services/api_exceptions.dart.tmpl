@@ -1,0 +1,30 @@
+import 'package:dio/dio.dart';
+
+/// Typed failure handed to `onError` callbacks of [BaseClient.safeApiCall].
+class ApiException implements Exception {
+  final String url;
+  final String message;
+  final int? statusCode;
+  final Response<dynamic>? response;
+
+  ApiException({
+    required this.url,
+    required this.message,
+    this.response,
+    this.statusCode,
+  });
+
+  /// Prefer the server's own message when it sent one; fall back to [message].
+  /// Adjust the keys below to match your backend's error envelope.
+  @override
+  String toString() {
+    final data = response?.data;
+    if (data is Map) {
+      final serverMessage = data['message'] ?? data['error'];
+      if (serverMessage is String && serverMessage.isNotEmpty) {
+        return serverMessage;
+      }
+    }
+    return message;
+  }
+}

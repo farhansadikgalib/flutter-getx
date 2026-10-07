@@ -1,0 +1,59 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:hive_ce_flutter/hive_flutter.dart';
+
+import '../models/user_model.dart';
+
+/// Hive (community edition) wrapper. One box per aggregate; add more boxes
+/// and adapters here as the app grows.
+class MyHive {
+  MyHive._();
+
+  static late Box<UserModel> _userBox;
+  static const String _userBoxName = 'user';
+  static const String _currentUserKey = 'local_user';
+
+  /// Call once from `main()`. Pass [testPath] from unit tests to avoid the
+  /// Flutter path provider.
+  static Future<void> init({
+    void Function(HiveInterface hive)? registerAdapters,
+    String? testPath,
+  }) async {
+    if (testPath != null) {
+      Hive.init(testPath);
+    } else {
+      await Hive.initFlutter();
+    }
+    registerAdapters?.call(Hive);
+    _userBox = await Hive.openBox<UserModel>(_userBoxName);
+  }
+
+  static Future<bool> saveUserToHive(UserModel user) async {
+    try {
+      await _userBox.put(_currentUserKey, user);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static UserModel? getCurrentUser() {
+    try {
+      return _userBox.get(_currentUserKey);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<bool> deleteCurrentUser() async {
+    try {
+      await _userBox.delete(_currentUserKey);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Test seam: swap the box for an in-memory or temp-dir one.
+  @visibleForTesting
+  static set userBox(Box<UserModel> box) => _userBox = box;
+}

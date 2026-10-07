@@ -1,0 +1,46 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:{{package_name}}/app/core/binding/initial_binding.dart';
+import 'package:{{package_name}}/app/data/local/my_shared_pref.dart';
+import 'package:{{package_name}}/app/routes/app_pages.dart';
+import 'package:{{package_name}}/config/theme/my_theme.dart';
+import 'package:{{package_name}}/config/translations/localization_service.dart';
+
+void main() {
+  testWidgets('language toggle switches to Arabic, RTL, and persists', (tester) async {
+    Get.testMode = false; // exercise the real updateLocale path
+    GoogleFonts.config.allowRuntimeFetching = false;
+    SharedPreferences.setMockInitialValues({});
+    MySharedPref.setStorage(await SharedPreferences.getInstance());
+
+    await tester.pumpWidget(ScreenUtilInit(
+      designSize: const Size(375, 812),
+      builder: (context, child) => GetMaterialApp(
+        theme: MyTheme.light(),
+        initialRoute: AppPages.INITIAL,
+        getPages: AppPages.routes,
+        initialBinding: InitialBinding(),
+        locale: MySharedPref.getCurrentLocal(),
+        fallbackLocale: LocalizationService.fallbackLocale,
+        translations: LocalizationService.getInstance(),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Hello!'), findsOneWidget);
+
+    // Get.updateLocale forces a reassemble, which only runs outside FakeAsync.
+    await tester.runAsync(LocalizationService.toggleLanguage);
+    await tester.pumpAndSettle();
+
+    expect(find.text('مرحباً!'), findsOneWidget);
+    expect(MySharedPref.getCurrentLocal().languageCode, 'ar');
+    final hello = tester.element(find.text('مرحباً!'));
+    expect(Directionality.of(hello), TextDirection.rtl);
+    Get.reset();
+  });
+}

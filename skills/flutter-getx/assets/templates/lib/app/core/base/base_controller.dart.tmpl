@@ -1,0 +1,33 @@
+import 'package:get/get.dart';
+import 'package:logger/logger.dart';
+
+import '../connection_manager/connection_manager_controller.dart';
+import 'page_state.dart';
+
+/// Every feature controller extends this instead of [GetxController] so it
+/// gets page-state handling, a logger, and access to the connection manager
+/// without boilerplate.
+abstract class BaseController extends GetxController {
+  /// Shared logger (prefer this over `print`).
+  final Logger logger = Logger();
+
+  /// Resolved lazily so unit tests only need the connection manager when a
+  /// controller actually touches it.
+  ConnectionManagerController get connection =>
+      Get.find<ConnectionManagerController>();
+
+  /// Lets a page opt out of resizing when the keyboard appears.
+  final resizeToAvoidBottomInset = true.obs;
+
+  final Rx<PageState> _pageState = PageState.defaultState.obs;
+
+  PageState get pageState => _pageState.value;
+
+  void updatePageState(PageState state) => _pageState.value = state;
+
+  void resetPageState() => updatePageState(PageState.defaultState);
+
+  void showLoading() => updatePageState(PageState.loading);
+
+  void hideLoading() => resetPageState();
+}

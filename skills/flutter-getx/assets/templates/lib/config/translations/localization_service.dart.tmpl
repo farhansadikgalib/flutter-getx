@@ -1,0 +1,56 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import '../../app/data/local/my_shared_pref.dart';
+import '../../generated/locales.g.dart';
+
+/// Wires GetX translations to the JSON files in `assets/locales/`.
+/// Add a language: drop `xx_YY.json` in that folder, run
+/// `get generate locales assets/locales`, then add it to [supportedLanguages].
+class LocalizationService extends Translations {
+  LocalizationService._();
+
+  static final LocalizationService _instance = LocalizationService._();
+
+  static LocalizationService getInstance() => _instance;
+
+  static const Locale fallbackLocale = Locale('en', 'US');
+
+  static Locale get defaultLanguage => supportedLanguages['en']!;
+
+  static const Map<String, Locale> supportedLanguages = {
+    'en': Locale('en', 'US'),
+    'ar': Locale('ar', 'AR'),
+  };
+
+  /// Font family per script. google_fonts downloads on first use; bundle the
+  /// TTFs under assets/fonts for offline-first apps.
+  static TextStyle fontFor(String languageCode) {
+    return switch (languageCode) {
+      'ar' => GoogleFonts.cairo(),
+      _ => GoogleFonts.poppins(),
+    };
+  }
+
+  @override
+  Map<String, Map<String, String>> get keys => AppTranslation.translations;
+
+  static bool isLanguageSupported(String languageCode) =>
+      supportedLanguages.containsKey(languageCode);
+
+  static Future<void> updateLanguage(String languageCode) async {
+    if (!isLanguageSupported(languageCode)) return;
+    await MySharedPref.setCurrentLanguage(languageCode);
+    if (!Get.testMode) {
+      Get.updateLocale(supportedLanguages[languageCode]!);
+    }
+  }
+
+  static Future<void> toggleLanguage() =>
+      updateLanguage(getCurrentLocal().languageCode == 'ar' ? 'en' : 'ar');
+
+  static bool get isItEnglish => getCurrentLocal().languageCode == 'en';
+
+  static Locale getCurrentLocal() => MySharedPref.getCurrentLocal();
+}

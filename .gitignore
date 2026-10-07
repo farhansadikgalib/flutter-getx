@@ -1,0 +1,20 @@
+# skill-creator eval workspace and packaged output
+flutter-getx-workspace/
+dist/
+*.skill
+
+# python
+__pycache__/
+*.pyc
+
+# os / editors
+.DS_Store
+.idea/
+.vscode/
+
+# throwaway flutter apps used for verification
+/tmp/
+
+# local OpenSpec/agent tooling (not part of the published skill)
+/.claude/
+/.agents/

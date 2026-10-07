@@ -1,0 +1,61 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:get/get.dart';
+import 'package:logger/logger.dart';
+
+import 'connection_type.dart';
+
+/// Tracks network availability for the whole app. connectivity_plus 6+ emits a
+/// list because a device can be on several transports at once; "offline" means
+/// the list is empty or contains [ConnectivityResult.none].
+class ConnectionManagerController extends GetxController {
+  final isInternetConnected = true.obs;
+  final connectionType = ConnectionType.wifi.obs;
+
+  final Connectivity _connectivity = Connectivity();
+  StreamSubscription<List<ConnectivityResult>>? _subscription;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _readInitialState();
+    _subscription = _connectivity.onConnectivityChanged.listen(
+      updateState,
+      // Missing plugin (unit tests, unsupported platform) must not crash the app.
+      onError: (Object error) =>
+          Logger().w('connectivity stream error: $error'),
+    );
+  }
+
+  @override
+  void onClose() {
+    _subscription?.cancel();
+    super.onClose();
+  }
+
+  Future<void> _readInitialState() async {
+    try {
+      updateState(await _connectivity.checkConnectivity());
+    } catch (error) {
+      Logger().w('connectivity check failed: $error');
+    }
+  }
+
+  /// Public so tests can drive state without a platform channel.
+  void updateState(List<ConnectivityResult> results) {
+    if (results.isEmpty || results.contains(ConnectivityResult.none)) {
+      connectionType.value = ConnectionType.noInternet;
+      isInternetConnected.value = false;
+      return;
+    }
+    if (results.contains(ConnectivityResult.wifi)) {
+      connectionType.value = ConnectionType.wifi;
+    } else if (results.contains(ConnectivityResult.mobile)) {
+      connectionType.value = ConnectionType.mobileData;
+    } else {
+      connectionType.value = ConnectionType.other;
+    }
+    isInternetConnected.value = true;
+  }
+}

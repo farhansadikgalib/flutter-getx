@@ -1,0 +1,12 @@
+import 'package:get/get.dart';
+
+import '../connection_manager/connection_manager_binding.dart';
+
+/// Registered once on `GetMaterialApp.initialBinding`. Put app-wide services
+/// here; per-page dependencies belong in the page's own binding.
+class InitialBinding extends Bindings {
+  @override
+  void dependencies() {
+    ConnectionManagerBinding().dependencies();
+  }
+}

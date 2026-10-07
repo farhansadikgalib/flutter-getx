@@ -1,0 +1,14 @@
+/// High-level UI state a page can be in. Controllers update it through
+/// [BaseController.updatePageState]; views react to it (loading overlays,
+/// error banners, etc.).
+enum PageState {
+  defaultState,
+  loading,
+  success,
+  failed,
+  updated,
+  created,
+  noInternet,
+  message,
+  unauthorized,
+}

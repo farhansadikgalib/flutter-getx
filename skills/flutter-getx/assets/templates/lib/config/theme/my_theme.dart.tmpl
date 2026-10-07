@@ -1,0 +1,70 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../../app/data/local/my_shared_pref.dart';
+import 'dark_theme_colors.dart';
+import 'light_theme_colors.dart';
+import 'my_styles.dart';
+
+/// Builds the light and dark [ThemeData] and persists the user's choice.
+/// Build the themes inside `ScreenUtilInit`'s builder: the styles use `.sp`.
+class MyTheme {
+  MyTheme._();
+
+  static ThemeData light() => getThemeData(isLight: true);
+
+  static ThemeData dark() => getThemeData(isLight: false);
+
+  static ThemeMode get themeMode => MySharedPref.getThemeMode();
+
+  static ThemeData getThemeData({required bool isLight}) {
+    final colorScheme = ColorScheme(
+      brightness: isLight ? Brightness.light : Brightness.dark,
+      primary: isLight ? LightThemeColors.primaryColor : DarkThemeColors.primaryColor,
+      onPrimary: isLight ? Colors.white : Colors.black,
+      secondary: isLight ? LightThemeColors.accentColor : DarkThemeColors.accentColor,
+      onSecondary: isLight ? Colors.black : Colors.white,
+      error: isLight ? LightThemeColors.errorColor : DarkThemeColors.errorColor,
+      onError: Colors.white,
+      surface: isLight ? LightThemeColors.backgroundColor : DarkThemeColors.backgroundColor,
+      onSurface: isLight ? LightThemeColors.bodyTextColor : DarkThemeColors.bodyTextColor,
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: colorScheme,
+      primaryColor: colorScheme.primary,
+      scaffoldBackgroundColor: isLight
+          ? LightThemeColors.scaffoldBackgroundColor
+          : DarkThemeColors.scaffoldBackgroundColor,
+      hintColor: isLight ? LightThemeColors.hintTextColor : DarkThemeColors.hintTextColor,
+      dividerColor: isLight ? LightThemeColors.dividerColor : DarkThemeColors.dividerColor,
+      cardTheme: CardThemeData(
+        color: isLight ? LightThemeColors.cardColor : DarkThemeColors.cardColor,
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: isLight
+            ? LightThemeColors.progressIndicatorColor
+            : DarkThemeColors.progressIndicatorColor,
+      ),
+      appBarTheme: MyStyles.getAppBarTheme(isLightTheme: isLight),
+      elevatedButtonTheme: MyStyles.getElevatedButtonTheme(isLightTheme: isLight),
+      textTheme: MyStyles.getTextTheme(isLightTheme: isLight),
+      chipTheme: MyStyles.getChipTheme(isLightTheme: isLight),
+      iconTheme: MyStyles.getIconTheme(isLightTheme: isLight),
+      listTileTheme: MyStyles.getListTileThemeData(isLightTheme: isLight),
+      extensions: [
+        MyStyles.getHeaderContainerTheme(isLightTheme: isLight),
+      ],
+    );
+  }
+
+  /// Flip light/dark, persist it, and let GetX rebuild with the new mode.
+  static Future<void> changeTheme() async {
+    final bool isLight = MySharedPref.getThemeIsLight();
+    await MySharedPref.setThemeIsLight(!isLight);
+    Get.changeThemeMode(!isLight ? ThemeMode.light : ThemeMode.dark);
+  }
+
+  static bool get isLight => MySharedPref.getThemeIsLight();
+}

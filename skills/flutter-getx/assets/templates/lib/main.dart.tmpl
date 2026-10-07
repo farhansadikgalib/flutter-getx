@@ -1,0 +1,57 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+
+import 'app/core/binding/initial_binding.dart';
+import 'app/data/local/my_hive.dart';
+import 'app/data/local/my_shared_pref.dart';
+import 'app/data/models/user_model.dart';
+import 'app/routes/app_pages.dart';
+import 'config/theme/my_theme.dart';
+import 'config/translations/localization_service.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Local database: register every generated adapter here.
+  await MyHive.init(
+    registerAdapters: (hive) => hive.registerAdapter(UserModelAdapter()),
+  );
+
+  // Key-value settings (theme, locale, tokens).
+  await MySharedPref.init();
+
+  runApp(const App());
+}
+
+class App extends StatelessWidget {
+  const App({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ScreenUtilInit(
+      // Artboard size of your Figma/XD design.
+      designSize: const Size({{design_width}}, {{design_height}}),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) {
+        return GetMaterialApp(
+          title: '{{app_title}}',
+          debugShowCheckedModeBanner: false,
+          theme: MyTheme.light(),
+          darkTheme: MyTheme.dark(),
+          themeMode: MyTheme.themeMode,
+          initialRoute: AppPages.INITIAL,
+          getPages: AppPages.routes,
+          initialBinding: InitialBinding(),
+          locale: MySharedPref.getCurrentLocal(),
+          fallbackLocale: LocalizationService.fallbackLocale,
+          translations: LocalizationService.getInstance(),
+          // Keep the app's type scale stable regardless of the OS font size.
+          builder: (context, widget) =>
+              MediaQuery.withNoTextScaling(child: widget ?? const SizedBox()),
+        );
+      },
+    );
+  }
+}

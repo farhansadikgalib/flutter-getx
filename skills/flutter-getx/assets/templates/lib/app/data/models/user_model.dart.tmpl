@@ -1,0 +1,51 @@
+import 'package:hive_ce/hive.dart';
+
+part 'user_model.g.dart';
+
+/// Example model that is both a JSON DTO (API) and a Hive object (cache).
+/// Run `dart run build_runner build --delete-conflicting-outputs` after
+/// changing the fields so the adapter is regenerated.
+@HiveType(typeId: 1)
+class UserModel {
+  @HiveField(0)
+  final int id;
+
+  @HiveField(1)
+  final String name;
+
+  @HiveField(2)
+  final String username;
+
+  @HiveField(3)
+  final String email;
+
+  @HiveField(4)
+  final String? phone;
+
+  const UserModel({
+    required this.id,
+    required this.name,
+    required this.username,
+    required this.email,
+    this.phone,
+  });
+
+  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
+        id: json['id'] as int,
+        name: json['name'] as String,
+        username: json['username'] as String,
+        email: json['email'] as String,
+        phone: json['phone'] as String?,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'username': username,
+        'email': email,
+        'phone': phone,
+      };
+
+  @override
+  String toString() => 'UserModel(id: $id, name: $name, email: $email)';
+}

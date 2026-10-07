@@ -1,0 +1,101 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
+
+import '../../../../config/theme/my_theme.dart';
+import '../../../../config/theme/theme_extensions/header_container_theme_data.dart';
+import '../../../../config/translations/localization_service.dart';
+import '../../../../generated/locales.g.dart';
+import '../../../core/base/base_view.dart';
+import '../controllers/home_controller.dart';
+
+class HomeView extends BaseView<HomeController> {
+  const HomeView({super.key});
+
+  @override
+  PreferredSizeWidget? appBar(BuildContext context) {
+    return AppBar(
+      title: Text(LocaleKeys.app_name.tr),
+      leading: _HeaderButton(
+        asset: 'assets/vectors/language.svg',
+        tooltip: LocaleKeys.change_language.tr,
+        onTap: LocalizationService.toggleLanguage,
+      ),
+      actions: [
+        _HeaderButton(
+          asset: Get.isDarkMode
+              ? 'assets/vectors/moon.svg'
+              : 'assets/vectors/sun.svg',
+          tooltip: LocaleKeys.change_theme.tr,
+          onTap: MyTheme.changeTheme,
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget body(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(LocaleKeys.hello.tr, style: Theme.of(context).textTheme.displayMedium),
+          16.verticalSpace,
+          Obx(
+            () => Text(
+              LocaleKeys.counter_label.trParams({'count': '${controller.count.value}'}),
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget? floatingActionButton(BuildContext context) {
+    return FloatingActionButton(
+      onPressed: controller.increment,
+      child: const Icon(Icons.add),
+    );
+  }
+}
+
+class _HeaderButton extends StatelessWidget {
+  const _HeaderButton({
+    required this.asset,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final String asset;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final decoration =
+        Theme.of(context).extension<HeaderContainerThemeData>()?.decoration;
+    return Padding(
+      padding: EdgeInsets.all(8.r),
+      child: Tooltip(
+        message: tooltip,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: onTap,
+          child: Container(
+            width: 39.h,
+            height: 39.h,
+            decoration: decoration,
+            child: SvgPicture.asset(
+              asset,
+              fit: BoxFit.none,
+              colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

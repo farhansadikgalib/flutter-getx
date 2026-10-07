@@ -1,0 +1,56 @@
+import 'package:flutter/widgets.dart';
+
+import '../services/api_call_status.dart';
+
+/// Switches between loading / success / error / empty widgets with a fade,
+/// driven by an [ApiCallStatus]. Wrap it in `Obx` and pass the controller's
+/// reactive status.
+class MyWidgetsAnimator extends StatelessWidget {
+  const MyWidgetsAnimator({
+    super.key,
+    required this.apiCallStatus,
+    required this.loadingWidget,
+    required this.successWidget,
+    required this.errorWidget,
+    this.emptyWidget,
+    this.holdingWidget,
+    this.refreshWidget,
+    this.animationDuration,
+    this.transitionBuilder,
+    this.hideSuccessWidgetWhileRefreshing = false,
+  });
+
+  final ApiCallStatus apiCallStatus;
+  final Widget Function() loadingWidget;
+  final Widget Function() successWidget;
+  final Widget Function() errorWidget;
+  final Widget Function()? emptyWidget;
+  final Widget Function()? holdingWidget;
+  final Widget Function()? refreshWidget;
+  final Duration? animationDuration;
+  final AnimatedSwitcherTransitionBuilder? transitionBuilder;
+
+  /// When refreshing, keep showing the success widget (default) or swap to
+  /// [refreshWidget] / an empty box.
+  final bool hideSuccessWidgetWhileRefreshing;
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget child = switch (apiCallStatus) {
+      ApiCallStatus.success || ApiCallStatus.cache => successWidget(),
+      ApiCallStatus.error => errorWidget(),
+      ApiCallStatus.loading => loadingWidget(),
+      ApiCallStatus.holding => holdingWidget?.call() ?? const SizedBox.shrink(),
+      ApiCallStatus.empty => emptyWidget?.call() ?? const SizedBox.shrink(),
+      ApiCallStatus.refresh => hideSuccessWidgetWhileRefreshing
+          ? (refreshWidget?.call() ?? const SizedBox.shrink())
+          : successWidget(),
+    };
+    return AnimatedSwitcher(
+      duration: animationDuration ?? const Duration(milliseconds: 300),
+      transitionBuilder:
+          transitionBuilder ?? AnimatedSwitcher.defaultTransitionBuilder,
+      child: child,
+    );
+  }
+}

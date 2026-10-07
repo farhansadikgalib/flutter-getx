@@ -1,0 +1,37 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import '../../app/data/local/my_shared_pref.dart';
+import '../translations/localization_service.dart';
+
+/// Font families and sizes. Sizes use screenutil's `.sp` so they scale with
+/// the design artboard set in `main.dart`.
+class MyFonts {
+  MyFonts._();
+
+  /// Font that matches the current app language (Latin vs Arabic script).
+  static TextStyle get appFont =>
+      LocalizationService.fontFor(MySharedPref.getCurrentLocal().languageCode);
+
+  static TextStyle get displayTextStyle => appFont;
+  static TextStyle get bodyTextStyle => appFont;
+  static TextStyle get buttonTextStyle => appFont;
+  static TextStyle get appBarTextStyle => appFont;
+  static TextStyle get chipTextStyle => appFont;
+
+  static double get appBarTitleSize => 18.sp;
+
+  static double get bodySmallTextSize => 11.sp;
+  static double get bodyMediumSize => 13.sp;
+  static double get bodyLargeSize => 16.sp;
+
+  static double get displayLargeSize => 20.sp;
+  static double get displayMediumSize => 17.sp;
+  static double get displaySmallSize => 14.sp;
+
+  static double get buttonTextSize => 16.sp;
+  static double get chipTextSize => 10.sp;
+
+  static double get listTileTitleSize => 13.sp;
+  static double get listTileSubtitleSize => 12.sp;
+}

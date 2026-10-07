@@ -1,0 +1,21 @@
+{
+  "name": "flutter-getx",
+  "owner": {
+    "name": "farhansadikgalib"
+  },
+  "metadata": {
+    "description": "Flutter GetX scaffolding skill: folder pattern, latest packages, get_cli modules",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "flutter-getx",
+      "description": "Scaffold and extend Flutter apps with GetX using a production folder pattern, latest pub.dev packages, and get_cli",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/flutter-getx"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+# Lints for a GetX project. Starts from flutter_lints and relaxes only what
+# get_cli's generated code needs.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - lib/generated/**
+    - "**/*.g.dart"
+    - build/**
+    - android/**
+    - ios/**
+    - macos/**
+
+linter:
+  rules:
+    # get_cli emits SCREAMING_CASE route constants (Routes.HOME).
+    constant_identifier_names: false

@@ -1,0 +1,26 @@
+import 'package:flutter/material.dart';
+
+/// Example `ThemeExtension`: a decoration for rounded header buttons. Read it
+/// with `Theme.of(context).extension<HeaderContainerThemeData>()`.
+class HeaderContainerThemeData
+    extends ThemeExtension<HeaderContainerThemeData> {
+  const HeaderContainerThemeData({this.decoration});
+
+  final BoxDecoration? decoration;
+
+  @override
+  HeaderContainerThemeData copyWith({BoxDecoration? decoration}) {
+    return HeaderContainerThemeData(decoration: decoration ?? this.decoration);
+  }
+
+  @override
+  HeaderContainerThemeData lerp(
+    covariant ThemeExtension<HeaderContainerThemeData>? other,
+    double t,
+  ) {
+    if (other is! HeaderContainerThemeData) return this;
+    return HeaderContainerThemeData(
+      decoration: BoxDecoration.lerp(decoration, other.decoration, t),
+    );
+  }
+}

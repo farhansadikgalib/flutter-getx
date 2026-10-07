@@ -1,0 +1,14 @@
+import 'package:get/get.dart';
+
+import 'connection_manager_controller.dart';
+
+class ConnectionManagerBinding extends Bindings {
+  @override
+  void dependencies() {
+    // fenix: recreate the controller if GetX ever disposes it.
+    Get.lazyPut<ConnectionManagerController>(
+      () => ConnectionManagerController(),
+      fenix: true,
+    );
+  }
+}

@@ -1,0 +1,62 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http_mock_adapter/http_mock_adapter.dart';
+
+import 'package:{{package_name}}/app/data/models/user_model.dart';
+import 'package:{{package_name}}/app/services/api_client.dart';
+import 'package:{{package_name}}/app/services/api_exceptions.dart';
+
+void main() {
+  late DioAdapter adapter;
+
+  setUp(() {
+    // Attaches itself to BaseClient.dio so no real network is used.
+    adapter = DioAdapter(dio: BaseClient.dio);
+  });
+
+  test('successful GET delivers a parsed model to onSuccess', () async {
+    adapter.onGet(
+      '/users/1',
+      (server) => server.reply(200, {
+        'id': 1,
+        'name': 'Leanne Graham',
+        'username': 'Bret',
+        'email': 'leanne@example.com',
+        'phone': '1-770-736-8031',
+      }),
+    );
+
+    UserModel? user;
+    ApiException? failure;
+    await BaseClient.safeApiCall(
+      '/users/1',
+      RequestType.get,
+      onSuccess: (response) =>
+          user = UserModel.fromJson(response.data as Map<String, dynamic>),
+      onError: (exception) => failure = exception,
+    );
+
+    expect(failure, isNull);
+    expect(user?.name, 'Leanne Graham');
+  });
+
+  test('404 is delivered as a typed ApiException', () async {
+    adapter.onGet(
+      '/users/999',
+      (server) => server.reply(404, {'error': 'user not found'}),
+    );
+
+    ApiException? failure;
+    await BaseClient.safeApiCall(
+      '/users/999',
+      RequestType.get,
+      onSuccess: (_) => fail('onSuccess must not run for a 404'),
+      onError: (exception) => failure = exception,
+    );
+
+    expect(failure, isNotNull);
+    expect(failure!.statusCode, 404);
+    expect(failure!.url, '/users/999');
+    // Server-provided message wins over the generic one.
+    expect(failure.toString(), 'user not found');
+  });
+}
