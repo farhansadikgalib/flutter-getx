@@ -1,16 +1,23 @@
 ---
 description: Upgrade an existing GetX project to the latest packages and current Flutter APIs, then fix what breaks
-argument-hint: '[project_dir] [--firebase]'
+argument-hint: '[--firebase] [--dry-run]'
 ---
 
-Upgrade a GetX project. Arguments: $ARGUMENTS (default project: current directory).
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/flutter-getx/scripts/getx.py" upgrade $ARGUMENTS --json --yes
+```
 
-Skill directory: `${CLAUDE_PLUGIN_ROOT}/skills/flutter-getx`. Follow the "Upgrade" section of `${CLAUDE_PLUGIN_ROOT}/skills/flutter-getx/SKILL.md` and the tables in `${CLAUDE_PLUGIN_ROOT}/skills/flutter-getx/references/packages.md`.
+How to run it:
 
-1. Baseline: `python3 "${CLAUDE_PLUGIN_ROOT}/skills/flutter-getx/scripts/doctor.py" --project <dir>` and `flutter analyze` (note the issue count).
-2. `python3 "${CLAUDE_PLUGIN_ROOT}/skills/flutter-getx/scripts/versions.py" --write <dir>/pubspec.yaml` (add `--firebase` if the project uses Firebase), then `flutter pub get`.
-3. Hive to hive_ce imports, build_runner, keeping every `typeId` and field index.
-4. Platform files and SDK constraint per "Upgrading an old project" in `packages.md`.
-5. Fix every `flutter analyze` issue using the migration table. Do not change app behaviour.
-6. `flutter test`; add the scaffold's tests from `${CLAUDE_PLUGIN_ROOT}/skills/flutter-getx/assets/templates/test/` if the project has none.
-7. Report before/after issue counts, package changes, platform changes, and anything left for the user (signing, Firebase config).
+- Run from the user's project root (or pass `--project <dir>`).
+- Pass the user's arguments through unchanged, quoting any word that contains spaces or apostrophes. Add `--json --yes`.
+- Read the single JSON object printed on stdout: `ok`, `created`, `modified`, `skipped`, `next`, `error`, plus command-specific fields. Progress goes to stderr.
+- Exit code 2 means the arguments were invalid: show the user the corrected command from `error` (it includes a suggestion), do not guess.
+- On `ok: false`, explain `error` in one sentence and the fix.
+
+The script updates every managed package, replaces hive with hive_ce, applies mechanical API fixes, runs build_runner, and reports `analyzer.before`, `analyzer.after` and `analyzer.remaining`. Your job is to finish it:
+
+1. Fix every remaining analyzer error and warning using the migration table in `${CLAUDE_PLUGIN_ROOT}/skills/flutter-getx/references/packages.md` (for example connectivity_plus now returns `List<ConnectivityResult>`). Do not change app behaviour.
+2. Apply the platform steps in "Upgrading an old project" in the same file (Dart constraint, Android Gradle toolchain, iOS/macOS deployment targets) when the project needs them.
+3. Run `flutter analyze` until it reports no errors, then `flutter test`; add the scaffold tests from `${CLAUDE_PLUGIN_ROOT}/skills/flutter-getx/assets/templates/test/` if the project has none.
+4. Report before and after issue counts and anything left for the user (signing, Firebase config).

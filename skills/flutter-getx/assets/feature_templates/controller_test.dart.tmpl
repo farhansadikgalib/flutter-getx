@@ -1,0 +1,65 @@
+import 'dart:convert';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
+import 'package:http_mock_adapter/http_mock_adapter.dart';
+
+import 'package:{{package_name}}/app/core/connection_manager/connection_manager_controller.dart';
+import 'package:{{package_name}}/app/data/remote/{{item_snake}}_remote_source.dart';
+import 'package:{{package_name}}/app/modules/{{snake_name}}/controllers/{{snake_name}}_controller.dart';
+import 'package:{{package_name}}/app/services/api_call_status.dart';
+import 'package:{{package_name}}/app/services/api_client.dart';
+
+void main() {
+  late DioAdapter adapter;
+
+  setUp(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    Get.testMode = true;
+    Get.put(ConnectionManagerController());
+    adapter = DioAdapter(dio: BaseClient.dio);
+  });
+
+  tearDown(Get.reset);
+
+  test('loading then success with parsed items', () async {
+    adapter.onGet(
+      {{item_class}}RemoteSource.endpoint,
+      (server) => server.reply(200, jsonDecode(r'''{{mock_body}}''')),
+    );
+
+    final controller = {{class_name}}Controller();
+    final seen = <ApiCallStatus>[];
+    ever(controller.apiCallStatus, seen.add);
+
+    await controller.load();
+
+    expect(seen, [ApiCallStatus.loading, ApiCallStatus.success]);
+    expect(controller.items, hasLength(1));
+  });
+
+  test('server error shows the error state', () async {
+    adapter.onGet(
+      {{item_class}}RemoteSource.endpoint,
+      (server) => server.reply(500, {'message': 'boom'}),
+    );
+
+    final controller = {{class_name}}Controller();
+    await controller.load();
+
+    expect(controller.apiCallStatus.value, ApiCallStatus.error);
+    expect(controller.errorMessage.value, 'boom');
+  });
+
+  test('empty response shows the empty state', () async {
+    adapter.onGet(
+      {{item_class}}RemoteSource.endpoint,
+      (server) => server.reply(200, jsonDecode(r'''{{empty_body}}''')),
+    );
+
+    final controller = {{class_name}}Controller();
+    await controller.load();
+
+    expect(controller.apiCallStatus.value, ApiCallStatus.empty);
+  });
+}

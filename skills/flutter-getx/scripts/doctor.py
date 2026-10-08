@@ -29,6 +29,8 @@ from pathlib import Path
 SCRIPTS = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS))
 import versions  # noqa: E402  (sibling script)
+import reporter  # noqa: E402
+from reporter import out  # noqa: E402
 
 OK, WARN, FAIL = "ok", "warn", "FAIL"
 results: list[tuple[str, str, str]] = []
@@ -125,7 +127,7 @@ def check_project(project: Path, offline: bool) -> None:
     if not missing:
         report(OK, "folder pattern", "all core directories present")
     elif len(missing) == len(PATTERN_DIRS):
-        report(WARN, "folder pattern", "not scaffolded; run /flutter-getx:init or scaffold.py")
+        report(WARN, "folder pattern", "not scaffolded; run getx init")
     else:
         report(WARN, "folder pattern", "missing: " + ", ".join(missing))
 
@@ -134,7 +136,7 @@ def check_project(project: Path, offline: bool) -> None:
 
     old = [n for n in versions.REPLACED if n in deps]
     if old:
-        report(FAIL, "replaced packages", f"{', '.join(old)} still declared; run /flutter-getx:upgrade")
+        report(FAIL, "replaced packages", f"{', '.join(old)} still declared; run getx upgrade")
 
     managed = [n for n in versions.all_managed(include_firebase=True) if n in deps]
     if managed and not offline:
@@ -187,7 +189,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--offline", action="store_true", help="skip pub.dev lookups")
     args = parser.parse_args(argv)
 
-    print("Toolchain")
+    out("Toolchain")
     check_toolchain(args.offline)
     project = Path(args.project).resolve()
     in_project = (project / "pubspec.yaml").exists()
@@ -198,16 +200,24 @@ def main(argv: list[str] | None = None) -> int:
     printed_project_header = False
     for i, (status, check, detail) in enumerate(results):
         if in_project and not printed_project_header and check == "folder pattern":
-            print(f"\nProject: {project}")
+            out(f"\nProject: {project}")
             printed_project_header = True
         mark = {"ok": "  ok  ", "warn": " warn ", "FAIL": " FAIL "}[status]
-        print(f"[{mark}] {check.ljust(width)}  {detail}")
+        out(f"[{mark}] {check.ljust(width)}  {detail}")
     if not in_project:
-        print(f"\n(no pubspec.yaml in {project}; project checks skipped)")
+        out(f"\n(no pubspec.yaml in {project}; project checks skipped)")
 
     fails = sum(1 for s, _, _ in results if s == FAIL)
+    rep = reporter.current()
+    rep.data["checks"] = [{"status": st, "check": c, "detail": d} for st, c, d in results]
+    if fails:
+        rep.fail(f"{fails} failing check(s)")
+    for st, c, d in results:
+        fix = re.search(r"run:? (.+)$", d)
+        if st != OK and fix:
+            rep.add_next(fix.group(1).strip())
     warns = sum(1 for s, _, _ in results if s == WARN)
-    print(f"\n{fails} failing, {warns} warnings")
+    out(f"\n{fails} failing, {warns} warnings")
     return 1 if fails else 0
 
 

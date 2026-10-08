@@ -1,6 +1,6 @@
 {
   "name": "flutter-getx",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Scaffold and extend Flutter apps with GetX: production folder pattern, latest pub.dev packages, get_cli pages, API features, models, translations, upgrades and push notifications.",
   "author": {
     "name": "Farhan Sadik Galib",

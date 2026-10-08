@@ -6,16 +6,21 @@
   },
   "metadata": {
     "description": "Flutter GetX plugin for Claude Code: scaffold apps, add pages and API features, generate models, upgrade projects.",
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "plugins": [
     {
       "name": "flutter-getx",
       "description": "Scaffold and extend Flutter apps with GetX using a production folder pattern, latest pub.dev packages, and get_cli.",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "source": "./",
       "category": "development",
-      "tags": ["flutter", "getx", "mobile", "dart"]
+      "tags": [
+        "flutter",
+        "getx",
+        "mobile",
+        "dart"
+      ]
     }
   ]
 }

@@ -24,6 +24,9 @@ import re
 import sys
 from pathlib import Path
 
+import reporter
+from reporter import out
+
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES = SKILL_ROOT / "assets" / "templates"
 TEMPLATE_SUFFIX = ".tmpl"
@@ -43,9 +46,11 @@ STARTER_MARKERS = {
 def read_package_name(project: Path) -> str:
     pubspec = project / "pubspec.yaml"
     if not pubspec.exists():
+        reporter.current().fail(f"{pubspec} not found; run `flutter create` first")
         sys.exit(f"error: {pubspec} not found; run `flutter create` first")
     m = re.search(r"^name:\s*([a-z0-9_]+)\s*$", pubspec.read_text(encoding="utf-8"), re.M)
     if not m:
+        reporter.current().fail("could not read `name:` from pubspec.yaml")
         sys.exit("error: could not read `name:` from pubspec.yaml")
     return m.group(1)
 
@@ -174,22 +179,40 @@ def scaffold(project: Path, values: dict[str, str], dry_run: bool) -> int:
     pubspec_changes = add_assets_to_pubspec(project, dry_run)
     pubspec_changes += ensure_network_access(project, dry_run)
 
+    result = reporter.current()
     prefix = "[dry-run] would " if dry_run else ""
     for rel in created:
-        print(f"{prefix}create   {rel}")
+        out(f"{prefix}create   {rel}")
+        result.add_created(rel)
     for rel in replaced:
-        print(f"{prefix}replace  {rel}  (untouched flutter create starter)")
+        out(f"{prefix}replace  {rel}  (untouched flutter create starter)")
+        result.add_modified(rel)
     for rel in skipped:
-        print(f"skip     {rel}  (already exists)")
+        out(f"skip     {rel}  (already exists)")
+        result.add_skipped(rel, "already exists")
     for change in pubspec_changes:
-        print(f"{prefix}{change}")
-    print(
+        out(f"{prefix}{change}")
+        result.add_modified(_changed_file(change))
+    out(
         f"\n{len(created)} created, {len(replaced)} replaced, {len(skipped)} skipped"
         + (" (dry run, nothing written)" if dry_run else "")
     )
+    if dry_run:
+        result.data["dry_run"] = True
     if created or replaced:
-        print("next: dart run build_runner build --delete-conflicting-outputs")
+        out("next: dart run build_runner build --delete-conflicting-outputs")
+        result.add_next("dart run build_runner build --delete-conflicting-outputs")
     return 0
+
+
+def _changed_file(change: str) -> str:
+    """Map a change-log line to the file it touched."""
+    if change.startswith("pubspec.yaml"):
+        return "pubspec.yaml"
+    if change.startswith("android main manifest"):
+        return "android/app/src/main/AndroidManifest.xml"
+    m = re.match(r"macos (\S+):", change)
+    return f"macos/Runner/{m.group(1)}" if m else change
 
 
 def main(argv: list[str] | None = None) -> int:

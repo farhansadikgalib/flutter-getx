@@ -19,15 +19,15 @@ get -v            # prints the GET CLI banner and version
 ```
 
 Pub installs `get` into `~/.pub-cache/bin`. If that is not on PATH, either
-add it or call `~/.pub-cache/bin/get` directly. `scripts/new_module.py` checks
+add it or call `~/.pub-cache/bin/get` directly. `getx` checks
 both locations.
 
 | Symptom | Cause | Fix |
 |---|---|---|
 | `Can't load Kernel binary: Invalid kernel binary format version` | The `get` snapshot was built by an older Dart SDK. Common after a Flutter upgrade. | `dart pub global activate get_cli` rebuilds it. |
 | `get: command not found` right after activation | `~/.pub-cache/bin` not on PATH | `export PATH="$PATH:$HOME/.pub-cache/bin"` |
-| `get generate model` prints `Null check operator used on a null value` from `PubspecUtils.nullSafeSupport` | get_cli reads the SDK constraint under a key its pubspec parser no longer provides. Affects every Dart 3 project. | Use `scripts/json_to_model.py` instead (section 3). |
-| Activation fails offline | needs pub.dev | `new_module.py` falls back to bundled templates and prints a notice. |
+| `get generate model` prints `Null check operator used on a null value` from `PubspecUtils.nullSafeSupport` | get_cli reads the SDK constraint under a key its pubspec parser no longer provides. Affects every Dart 3 project. | Use `getx generate model:<Class> with <json>` instead (section 3). |
+| Activation fails offline | needs pub.dev | `getx` falls back to bundled templates and prints a notice (or pass `--no-get-cli`). |
 
 ## 2. Commands to use
 
@@ -35,7 +35,7 @@ Run them from the project root.
 
 ### Pages (modules)
 
-Prefer `python scripts/new_module.py <name> [--on <parent>]`. It wraps the
+Prefer `getx create page:<name> [on <parent>]`. It wraps the
 command below and then conforms the files (section 4).
 
 ```bash
@@ -54,6 +54,8 @@ What get_cli does:
   `/profile/settings`).
 
 ### Extra controller or view inside a module
+
+Prefer `getx create controller:edit on profile` and `getx create view:edit on profile`: they write files that already extend `BaseController`/`BaseView` and register the controller in the binding. The notes below describe what raw get_cli produces if you use it directly.
 
 ```bash
 get create controller:edit on profile   # also adds Get.lazyPut<EditController> to profile_binding.dart
@@ -103,14 +105,14 @@ and they stop matching the templates.
 
 | Command | Why | Do instead |
 |---|---|---|
-| `get create project`, `get init` | `get init` overwrites everything in `lib/` with get_cli's own layout. | `scripts/new_project.sh` or `scripts/scaffold.py` |
-| `get create screen:<name>` | Belongs to the "clean" layout: writes to `lib/presentation/` and `lib/infrastructure/navigation/`, outside this pattern. | `scripts/new_module.py <name>` |
-| `get generate model ...` | Crashes on Dart 3 projects in 1.9.1 (see troubleshooting). | `python scripts/json_to_model.py sample.json ProductModel` |
+| `get create project`, `get init` | `get init` overwrites everything in `lib/` with get_cli's own layout. | `getx create project:<name>` or `getx init` |
+| `get create screen:<name>` | Belongs to the "clean" layout: writes to `lib/presentation/` and `lib/infrastructure/navigation/`, outside this pattern. | `getx create page:<name>` |
+| `get generate model ...` | Crashes on Dart 3 projects in 1.9.1 (see troubleshooting). | `getx generate model:Product with sample.json` |
 | `get create provider:<name> on <module>` | Works, but generates a `GetConnect` class that bypasses `BaseClient`, so you lose the shared Dio config, logging and typed errors. | A data source in `lib/app/data/remote/` that calls `BaseClient.safeApiCall` (see `networking.md`). |
 
 ## 4. What the skill changes after get_cli runs
 
-`new_module.py` keeps get_cli's binding and route registration and replaces
+`getx create page` keeps get_cli's binding and route registration and replaces
 only the controller and view:
 
 | File | get_cli writes | Skill rewrites to |

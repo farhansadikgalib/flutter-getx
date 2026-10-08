@@ -1,0 +1,21 @@
+import 'package:flutter/material.dart';
+
+import 'package:{{package_name}}/app/core/base/base_view.dart';
+import '../controllers/{{snake_name}}_controller.dart';
+
+/// Extra view in this module (not routed). Push it with
+/// `Get.to(() => const {{class_name}}View())` from a page of the same module,
+/// or add a GetPage for it in app_pages.dart.
+class {{class_name}}View extends BaseView<{{class_name}}Controller> {
+  const {{class_name}}View({super.key});
+
+  @override
+  PreferredSizeWidget? appBar(BuildContext context) {
+    return AppBar(title: const Text('{{class_name}}'));
+  }
+
+  @override
+  Widget body(BuildContext context) {
+    return const Center(child: Text('{{class_name}}View is working'));
+  }
+}

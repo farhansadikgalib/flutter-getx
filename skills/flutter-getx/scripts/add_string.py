@@ -25,6 +25,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+import reporter
+from reporter import out
+
 
 def find_get() -> str | None:
     exe = shutil.which("get")
@@ -55,6 +58,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("english", help="English text")
     parser.add_argument("--project", default=".", help="Flutter project root (default: cwd)")
     parser.add_argument("--no-generate", action="store_true", help="skip `get generate locales`")
+    parser.add_argument("--dry-run", action="store_true", help="show the values without writing")
     args = parser.parse_args(rest)
 
     if not re.fullmatch(r"[a-z][a-z0-9_]*", args.key):
@@ -64,8 +68,10 @@ def main(argv: list[str] | None = None) -> int:
     locales_dir = project / "assets" / "locales"
     files = sorted(locales_dir.glob("*.json"))
     if not files:
+        reporter.current().fail(f"no locale files in {locales_dir}; is this a scaffolded project?")
         sys.exit(f"error: no locale files in {locales_dir}; is this a scaffolded project?")
 
+    result = reporter.current()
     per_lang.setdefault("en", args.english)
     untranslated = []
     for f in files:
@@ -77,12 +83,22 @@ def main(argv: list[str] | None = None) -> int:
             untranslated.append(f.name)
         old = data.get(args.key)
         data[args.key] = value
-        f.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         verb = "updated" if old is not None else "added"
-        print(f"{verb:8} {f.name}: {args.key} = {value}")
+        if args.dry_run:
+            out(f"[dry-run] would set {f.name}: {args.key} = {value}")
+        else:
+            f.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            out(f"{verb:8} {f.name}: {args.key} = {value}")
+        result.add_modified(f"assets/locales/{f.name}")
 
     if untranslated:
-        print("needs translation (English used): " + ", ".join(untranslated))
+        out("needs translation (English used): " + ", ".join(untranslated))
+        result.data["untranslated"] = untranslated
+    result.data["key"] = args.key
+    if args.dry_run:
+        result.data["dry_run"] = True
+        out(f"use: LocaleKeys.{args.key}.tr")
+        return 0
 
     if not args.no_generate:
         exe = find_get()
@@ -90,12 +106,18 @@ def main(argv: list[str] | None = None) -> int:
             r = subprocess.run([exe, "generate", "locales", "assets/locales"], cwd=project,
                                capture_output=True, text=True)
             ok = r.returncode == 0 and (project / "lib/generated/locales.g.dart").exists()
-            print("regenerated lib/generated/locales.g.dart" if ok
-                  else "warning: get generate locales failed:\n" + (r.stdout + r.stderr)[-400:])
+            out("regenerated lib/generated/locales.g.dart" if ok
+                else "warning: get generate locales failed:\n" + (r.stdout + r.stderr)[-400:])
+            if ok:
+                result.add_modified("lib/generated/locales.g.dart")
+            else:
+                result.warn("get generate locales failed")
+                result.add_next("get generate locales assets/locales")
         else:
-            print("get_cli not found: run `get generate locales assets/locales` after installing it")
+            import locales  # same output format as get_cli
+            locales.generate(project)
 
-    print(f"use: LocaleKeys.{args.key}.tr")
+    out(f"use: LocaleKeys.{args.key}.tr")
     return 0
 
 

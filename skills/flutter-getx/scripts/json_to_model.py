@@ -29,6 +29,9 @@ import re
 import sys
 from pathlib import Path
 
+import reporter
+from reporter import out
+
 DART_RESERVED = {
     "abstract", "as", "assert", "async", "await", "break", "case", "catch", "class",
     "const", "continue", "default", "do", "dynamic", "else", "enum", "export", "extends",
@@ -218,6 +221,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--nullable", default="", help="comma-separated JSON keys to force nullable")
     parser.add_argument("--stdout", action="store_true", help="print instead of writing a file")
     parser.add_argument("--force", action="store_true", help="overwrite an existing model file")
+    parser.add_argument("--dry-run", action="store_true", help="show the target file and classes without writing")
     args = parser.parse_args(argv)
 
     data = json.loads(Path(args.sample).read_text(encoding="utf-8"))
@@ -229,6 +233,7 @@ def main(argv: list[str] | None = None) -> int:
                     merged.setdefault(k, v)
         data = merged
     if not isinstance(data, dict):
+        reporter.current().fail("sample must be a JSON object or a list of objects")
         sys.exit("error: sample must be a JSON object or a list of objects")
 
     root = pascal(args.class_name) if not re.fullmatch(r"[A-Z][A-Za-z0-9]*", args.class_name) else args.class_name
@@ -243,12 +248,23 @@ def main(argv: list[str] | None = None) -> int:
     base = snake(root)
     filename = base if base.endswith("_model") else f"{base}_model"
     dest = Path(args.project) / args.out / f"{filename}.dart"
+    result = reporter.current()
+    rel = (Path(args.out) / f"{filename}.dart").as_posix()
+    result.data.update({"classes": list(gen.classes), "model_file": rel})
     if dest.exists() and not args.force:
-        print(f"error: {dest} exists; pass --force to overwrite", file=sys.stderr)
+        result.fail(f"{rel} exists; pass --force to overwrite")
+        out(f"error: {dest} exists; pass --force to overwrite", file=sys.stderr)
         return 1
+    if args.dry_run:
+        out(f"[dry-run] would write {dest} ({len(gen.classes)} classes: {', '.join(gen.classes)})")
+        (result.add_modified if dest.exists() else result.add_created)(rel)
+        result.data["dry_run"] = True
+        return 0
+    existed = dest.exists()
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(code, encoding="utf-8")
-    print(f"wrote {dest} ({len(gen.classes)} classes: {', '.join(gen.classes)})")
+    out(f"wrote {dest} ({len(gen.classes)} classes: {', '.join(gen.classes)})")
+    (result.add_modified if existed else result.add_created)(rel)
     return 0
 
 

@@ -27,7 +27,7 @@ Read synchronously anywhere after `MySharedPref.init()`.
 
 ## Hive CE: add a cached type
 
-1. Create or generate the model (`scripts/json_to_model.py`), then annotate it.
+1. Create or generate the model (`getx generate model:Product with <json>`), then annotate it.
    Each class needs a unique `typeId`; each field a unique, never-reused index.
 
    ```dart

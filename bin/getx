@@ -1,0 +1,16 @@
+#!/bin/sh
+# getx launcher for a clone of github.com/farhansadikgalib/flutter-getx.
+# Symlink it onto your PATH, or run `bin/getx install-cli` to write a launcher
+# into ~/.local/bin.
+set -e
+self="$0"
+# follow symlinks so the launcher works from ~/.local/bin or /usr/local/bin
+while [ -L "$self" ]; do
+  link=$(readlink "$self")
+  case "$link" in
+    /*) self="$link" ;;
+    *) self="$(dirname "$self")/$link" ;;
+  esac
+done
+root=$(cd "$(dirname "$self")/.." && pwd)
+exec python3 "$root/skills/flutter-getx/scripts/getx.py" "$@"

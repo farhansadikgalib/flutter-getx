@@ -1,0 +1,48 @@
+import 'package:get/get.dart';
+
+import 'package:{{package_name}}/app/components/custom_snackbar.dart';
+import 'package:{{package_name}}/app/core/base/base_controller.dart';
+import 'package:{{package_name}}/app/data/models/{{item_snake}}_model.dart';
+import 'package:{{package_name}}/app/data/remote/{{item_snake}}_remote_source.dart';
+import 'package:{{package_name}}/app/services/api_call_status.dart';
+
+class {{class_name}}Controller extends BaseController {
+  /// The source is injectable so tests can pass a fake.
+  {{class_name}}Controller({{{item_class}}RemoteSource? source})
+      : _source = source ?? {{item_class}}RemoteSource();
+
+  final {{item_class}}RemoteSource _source;
+
+  final apiCallStatus = ApiCallStatus.holding.obs;
+  final items = <{{model_class}}>[].obs;
+  final errorMessage = ''.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    load();
+  }
+
+  /// First load and retry show the full-screen states; a pull-to-refresh
+  /// keeps the current list on screen and reports failures as a toast.
+  Future<void> load({bool refresh = false}) async {
+    final keepList = refresh && items.isNotEmpty;
+    apiCallStatus.value = keepList ? ApiCallStatus.refresh : ApiCallStatus.loading;
+    await _source.fetchAll(
+      onSuccess: (result) {
+        items.assignAll(result);
+        apiCallStatus.value =
+            result.isEmpty ? ApiCallStatus.empty : ApiCallStatus.success;
+      },
+      onError: (exception) {
+        errorMessage.value = exception.toString();
+        if (keepList) {
+          apiCallStatus.value = ApiCallStatus.success;
+          CustomSnackBar.showCustomErrorToast(message: errorMessage.value);
+        } else {
+          apiCallStatus.value = ApiCallStatus.error;
+        }
+      },
+    );
+  }
+}

@@ -251,6 +251,45 @@ class NewModuleFallbackTest(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
         self.assertIn("already exists", r.stdout)
 
+    def test_controller_and_view_targets(self):
+        r = self.module("edit", "--kind", "controller", "--on", "home")
+        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
+        ctrl = (self.p / "lib/app/modules/home/controllers/edit_controller.dart").read_text()
+        self.assertIn("class EditController extends BaseController", ctrl)
+        binding = (self.p / "lib/app/modules/home/bindings/home_binding.dart").read_text()
+        self.assertIn("import '../controllers/edit_controller.dart';", binding)
+        self.assertIn("Get.lazyPut<EditController>(", binding)
+        self.assertIn("Get.lazyPut<HomeController>(", binding)  # existing registration kept
+
+        # view with a same-named controller binds to it
+        r = self.module("edit", "--kind", "view", "--on", "home")
+        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
+        view = (self.p / "lib/app/modules/home/views/edit_view.dart").read_text()
+        self.assertIn("class EditView extends BaseView<EditController>", view)
+        # view without one binds to the module's controller
+        self.module("details", "--kind", "view", "--on", "home")
+        view = (self.p / "lib/app/modules/home/views/details_view.dart").read_text()
+        self.assertIn("extends BaseView<HomeController>", view)
+        self.assertIn("import '../controllers/home_controller.dart';", view)
+        # views are not routed
+        self.assertNotIn("DETAILS", (self.p / "lib/app/routes/app_routes.dart").read_text())
+
+        again = self.module("edit", "--kind", "controller", "--on", "home")
+        self.assertEqual(again.returncode, 1)
+        self.assertIn("already exists", again.stdout)
+        missing_on = self.module("x", "--kind", "controller")
+        self.assertEqual(missing_on.returncode, 2)
+
+    def test_dry_run_changes_nothing(self):
+        before = sorted((str(f), f.stat().st_size) for f in self.p.rglob("*") if f.is_file())
+        r = self.module("cart", "--dry-run")
+        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
+        self.assertIn("[dry-run] would create", r.stdout)
+        r = self.module("edit", "--kind", "controller", "--on", "home", "--dry-run")
+        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
+        after = sorted((str(f), f.stat().st_size) for f in self.p.rglob("*") if f.is_file())
+        self.assertEqual(before, after)
+
     def test_name_normalization_and_validation(self):
         r = self.module("Order-History")
         self.assertEqual(r.returncode, 0, r.stderr + r.stdout)

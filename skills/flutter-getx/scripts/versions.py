@@ -24,6 +24,9 @@ import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
+
+import reporter
+from reporter import out
 from typing import Callable
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
@@ -114,7 +117,7 @@ def fetch_latest(name: str) -> str:
     if data.get("isDiscontinued"):
         replacement = data.get("replacedBy")
         hint = f" (replaced by {replacement})" if replacement else ""
-        print(f"warning: {name} is discontinued on pub.dev{hint}", file=sys.stderr)
+        out(f"warning: {name} is discontinued on pub.dev{hint}", file=sys.stderr)
     return data["latest"]["version"]
 
 
@@ -142,16 +145,16 @@ def resolve(names: list[str], offline: bool) -> tuple[dict[str, str], bool]:
             try:
                 version = fetch_latest(name)
             except (urllib.error.URLError, TimeoutError, KeyError, ValueError, OSError) as exc:
-                print(f"warning: pub.dev lookup failed for {name}: {exc}", file=sys.stderr)
+                out(f"warning: pub.dev lookup failed for {name}: {exc}", file=sys.stderr)
         if version is None:
             version = snapshot.get(name)
             if version is None:
-                print(f"error: no snapshot version for {name}; cannot continue offline", file=sys.stderr)
+                out(f"error: no snapshot version for {name}; cannot continue offline", file=sys.stderr)
                 sys.exit(2)
             used_snapshot = True
         result[name] = version
     if used_snapshot:
-        print(
+        out(
             f"warning: used snapshot versions from {SNAPSHOT_FILE.name}; "
             "run again online or `flutter pub upgrade` later",
             file=sys.stderr,
@@ -297,21 +300,27 @@ def main(argv: list[str] | None = None) -> int:
     if args.write:
         pubspec = Path(args.write)
         if not pubspec.exists():
-            print(f"error: {pubspec} not found", file=sys.stderr)
+            reporter.current().fail(f"{pubspec} not found")
+            out(f"error: {pubspec} not found", file=sys.stderr)
             return 1
         missing = [n for n in all_managed(args.firebase) if n not in versions]
         if missing:
             extra, _ = resolve(missing, offline=args.offline)
             versions.update(extra)
-        for change in write_pubspec(pubspec, versions, args.firebase):
-            print(change)
+        changes = write_pubspec(pubspec, versions, args.firebase)
+        for change in changes:
+            out(change)
+        result = reporter.current()
+        if changes:
+            result.add_modified(pubspec.name)
+        result.data["pubspec_changes"] = changes
         return 0
 
     if args.json:
-        print(json.dumps(versions, indent=2))
+        out(json.dumps(versions, indent=2))
     else:
         for name, version in versions.items():
-            print(f"{name}: {version}")
+            out(f"{name}: {version}")
     return 0
 
 

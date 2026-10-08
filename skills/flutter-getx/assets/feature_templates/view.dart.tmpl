@@ -1,0 +1,55 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import 'package:{{package_name}}/app/components/api_error_widget.dart';
+import 'package:{{package_name}}/app/components/my_widgets_animator.dart';
+import 'package:{{package_name}}/app/core/base/base_view.dart';
+import 'package:{{package_name}}/generated/locales.g.dart';
+import '../controllers/{{snake_name}}_controller.dart';
+
+class {{class_name}}View extends BaseView<{{class_name}}Controller> {
+  const {{class_name}}View({super.key});
+
+  @override
+  PreferredSizeWidget? appBar(BuildContext context) =>
+      AppBar(title: Text(LocaleKeys.{{snake_name}}_title.tr));
+
+  @override
+  Widget body(BuildContext context) {
+    return Obx(
+      () => MyWidgetsAnimator(
+        apiCallStatus: controller.apiCallStatus.value,
+        loadingWidget: () => const Center(child: CircularProgressIndicator()),
+        errorWidget: () => ApiErrorWidget(
+          message: controller.errorMessage.value,
+          retryAction: controller.load,
+        ),
+        emptyWidget: () => RefreshIndicator(
+          onRefresh: () => controller.load(refresh: true),
+          child: ListView(
+            children: [
+              SizedBox(
+                height: 240,
+                child: Center(child: Text(LocaleKeys.no_{{snake_name}}_yet.tr)),
+              ),
+            ],
+          ),
+        ),
+        successWidget: () => RefreshIndicator(
+          onRefresh: () => controller.load(refresh: true),
+          child: ListView.separated(
+            itemCount: controller.items.length,
+            separatorBuilder: (_, _) => const Divider(height: 1),
+            itemBuilder: (_, index) {
+              final item = controller.items[index];
+              return ListTile(
+                title: Text({{title_expr}}),
+                subtitle: Text({{subtitle_expr}}),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}

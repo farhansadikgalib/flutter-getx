@@ -1,21 +1,18 @@
 ---
-description: Add the GetX folder pattern and basic elements to an existing Flutter project without overwriting files
-argument-hint: '[project_dir] [--title "My App"] [--design-size 375x812]'
+description: Add the GetX folder pattern, latest packages, and basic elements to an existing Flutter app without overwriting your files
+argument-hint: '[--title "My App"] [--design-size 375x812] [--dry-run]'
 ---
 
-Add the GetX pattern to an existing Flutter project. Arguments: $ARGUMENTS (default project: current directory).
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/flutter-getx/scripts/getx.py" init $ARGUMENTS --json --yes
+```
 
-Skill directory: `${CLAUDE_PLUGIN_ROOT}/skills/flutter-getx`. Read `${CLAUDE_PLUGIN_ROOT}/skills/flutter-getx/SKILL.md` ("Existing project") first.
+How to run it:
 
-1. Confirm `pubspec.yaml` exists in the project.
-2. Preview, then apply:
+- Run from the user's project root (or pass `--project <dir>`).
+- Pass the user's arguments through unchanged, quoting any word that contains spaces or apostrophes. Add `--json --yes`.
+- Read the single JSON object printed on stdout: `ok`, `created`, `modified`, `skipped`, `next`, `error`, plus command-specific fields. Progress goes to stderr.
+- Exit code 2 means the arguments were invalid: show the user the corrected command from `error` (it includes a suggestion), do not guess.
+- On `ok: false`, explain `error` in one sentence and the fix.
 
-   ```bash
-   python3 "${CLAUDE_PLUGIN_ROOT}/skills/flutter-getx/scripts/scaffold.py" <project_dir> --dry-run
-   python3 "${CLAUDE_PLUGIN_ROOT}/skills/flutter-getx/scripts/versions.py" --write <project_dir>/pubspec.yaml
-   python3 "${CLAUDE_PLUGIN_ROOT}/skills/flutter-getx/scripts/scaffold.py" <project_dir> [--app-title ...] [--design-size ...]
-   ```
-
-3. In the project: `flutter pub get`, `dart run build_runner build --delete-conflicting-outputs`, `flutter analyze`, `flutter test`.
-4. `scaffold.py` never overwrites edited files. For each file it reports as skipped, tell the user and merge the template by hand where it matters, usually `lib/main.dart` against `${CLAUDE_PLUGIN_ROOT}/skills/flutter-getx/assets/templates/lib/main.dart.tmpl`.
-5. Report what was created, what was skipped, and analyze/test results.
+The script pins the latest packages, renders the pattern, runs `flutter pub get` and build_runner. For each entry in `skipped` (files the user had already edited), tell the user and offer to merge the template by hand, usually `lib/main.dart` against `${CLAUDE_PLUGIN_ROOT}/skills/flutter-getx/assets/templates/lib/main.dart.tmpl`. Finish with `flutter analyze` and `flutter test`.

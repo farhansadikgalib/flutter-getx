@@ -2,7 +2,7 @@
 
 ## Routes
 
-Routes live in `lib/app/routes/`. Add them with `scripts/new_module.py`,
+Routes live in `lib/app/routes/`. Add them with `getx create page:<name> [on <parent>]`,
 which lets get_cli register them, rather than editing by hand.
 
 ```dart

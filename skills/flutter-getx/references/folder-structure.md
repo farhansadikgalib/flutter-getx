@@ -63,12 +63,12 @@ Route constants are SCREAMING_CASE because get_cli generates them;
 
 | You are adding | Put it in |
 |---|---|
-| A new screen | `modules/<name>/` via `scripts/new_module.py <name>` |
-| A sub-screen only reachable from another screen | `modules/<parent>/<name>/` via `new_module.py <name> --on <parent>` |
+| A new screen | `modules/<name>/` via `getx create page:<name>` |
+| A sub-screen only reachable from another screen | `modules/<parent>/<name>/` via `getx create page:<name> on <parent>` |
 | A widget used by one screen | `modules/<name>/views/widgets/` |
 | A widget used by several screens | `app/components/` |
 | An HTTP call | a method on a source in `data/remote/` that calls `BaseClient.safeApiCall` |
-| JSON model | `data/models/` via `scripts/json_to_model.py` |
+| JSON model | `data/models/` via `getx generate model:<Class> with <json>` |
 | Something cached on disk | a box in `data/local/my_hive.dart`; small flags in `my_shared_pref.dart` |
 | An app-wide service (auth session, analytics) | a `GetxService` registered in `core/binding/initial_binding.dart` |
 | A color or text style | `config/theme/` palettes and `MyStyles`, never inline hex in a view |
