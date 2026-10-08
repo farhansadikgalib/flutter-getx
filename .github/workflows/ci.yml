@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly: catch breaking releases of the packages the scaffold pins.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  scripts:
+    name: Script unit tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m unittest discover -s tests -v
+
+  scaffold:
+    name: Fresh scaffold builds with latest packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Activate get_cli
+        run: |
+          dart pub global activate get_cli
+          echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
+      - name: Create project (analyze and test run inside the script)
+        run: bash skills/flutter-getx/scripts/new_project.sh ci_app --platforms android,ios --dir "$RUNNER_TEMP"
+      - name: Add a page and a model
+        working-directory: ${{ runner.temp }}/ci_app
+        run: |
+          python3 "$GITHUB_WORKSPACE/skills/flutter-getx/scripts/new_module.py" settings
+          python3 "$GITHUB_WORKSPACE/skills/flutter-getx/scripts/new_module.py" reviews --on settings
+          echo '{"id":1,"title":"x","price":9.5,"rating":{"rate":4.5,"count":3}}' > product.json
+          python3 "$GITHUB_WORKSPACE/skills/flutter-getx/scripts/json_to_model.py" product.json ProductModel
+          python3 "$GITHUB_WORKSPACE/skills/flutter-getx/scripts/add_string.py" ci_key "CI" --ar "اختبار"
+          flutter analyze
+          flutter test
+      - name: Doctor
+        run: python3 skills/flutter-getx/scripts/doctor.py --project "$RUNNER_TEMP/ci_app"

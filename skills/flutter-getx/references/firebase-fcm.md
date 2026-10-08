@@ -16,8 +16,12 @@ awesome_notifications 0.12.1. Check `packages.md` for current versions.
    flutter pub get
    ```
 
-2. **Connect the Firebase project.** Needs the user's Firebase account, so
-   ask them to run it (or run it if they are logged in):
+2. **Connect the Firebase project.** If `lib/firebase_options.dart` does not
+   exist yet, copy the placeholder from
+   `assets/addons/firebase/lib/firebase_options.dart` so the app compiles and
+   runs with push notifications off. Never overwrite an existing one. Then
+   the user runs flutterfire with their Firebase account, which replaces the
+   placeholder:
 
    ```bash
    dart pub global activate flutterfire_cli
